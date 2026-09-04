@@ -11,7 +11,28 @@ export class MapApp extends LitElement {
 
   @state() selected: Record<string, string> = {};
 
-  static styles = css``;
+  static styles = css`
+    #search-form {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 20rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background: #ededed;
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+        input {
+          margin-right: 0.5rem;
+        }
+      }
+    }
+  `;
 
   private _handleOnResults(event: CustomEvent) {
     this.selected = {};

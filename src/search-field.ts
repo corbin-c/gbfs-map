@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { proxified } from './cors-proxy.js';
 
@@ -10,6 +10,16 @@ export class SearchField extends LitElement {
   @state() gbfsSystems: string[][] = [];
 
   @state() searchValue = '';
+
+  static styles = css`
+    div {
+      width: 100%;
+      display: flex;
+    }
+    input {
+      width: 100%;
+    }
+  `;
 
   constructor() {
     super();
@@ -46,6 +56,6 @@ export class SearchField extends LitElement {
   };
 
   render() {
-    return html`<input type="text" @keyup="${this._updateValue}" />`;
+    return html`<div><input type="text" @keyup="${this._updateValue}" /></div>`;
   }
 }
