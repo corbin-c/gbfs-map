@@ -1,15 +1,21 @@
+import { provide } from '@lit/context';
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 
 import './search-field.js';
 import './map.js';
+import { proxified } from './cors-proxy.js';
+import { AvailableBike } from './types.js';
+import { bikesContext } from './bikes-context.js';
 
 @customElement('map-app')
 export class MapApp extends LitElement {
   @state() results: string[][] = [];
 
-  @state() selected: Record<string, string> = {};
+  @provide({ context: bikesContext })
+  @state()
+  selected: Record<string, AvailableBike[]> = {};
 
   static styles = css`
     #search-form {
@@ -53,17 +59,39 @@ export class MapApp extends LitElement {
                   <label
                     ><input
                       value="${e[5]}"
-                      @change="${(event: Event) => {
+                      @change="${async (event: Event) => {
                         const target = event.target as HTMLInputElement;
                         if (!target) {
                           return;
                         }
                         if (target.checked) {
-                          // eslint-disable-next-line prefer-destructuring
-                          this.selected[e[5]] = e[1];
+                          // do proper error / loading managment
+                          const url = e[5];
+                          const gbfsResponse = await fetch(proxified(url));
+                          const gbfs = await gbfsResponse.json();
+                          const enData = gbfs.data.en;
+                          const availableBikesUrl = enData?.feeds?.find(
+                            (f: { name: string }) =>
+                              f.name === 'free_bike_status',
+                          )?.url;
+                          if (!availableBikesUrl) {
+                            return;
+                          }
+                          const availableBikesResponse = await fetch(
+                            proxified(availableBikesUrl),
+                          );
+                          const availableBikes =
+                            await availableBikesResponse.json();
+                          this.selected = {
+                            ...this.selected,
+                            [e[5]]: availableBikes.data.bikes,
+                          };
                         } else {
-                          delete this.selected[e[5]];
+                          const next = { ...this.selected };
+                          delete next[e[5]];
+                          this.selected = next;
                         }
+                        console.log(this.selected);
                       }}"
                       type="checkbox"
                     />${e[1]}</label

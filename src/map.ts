@@ -1,26 +1,64 @@
 import { LitElement, css, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import * as maplibregl from 'maplibre-gl';
+import { consume } from '@lit/context';
+import { AvailableBike } from './types.js';
+import { bikesContext } from './bikes-context.js';
+
+const PALETTE = [
+  '#e6194b',
+  '#3cb44b',
+  '#ffe119',
+  '#4363d8',
+  '#f58231',
+  '#911eb4',
+  '#46f0f0',
+  '#f032e6',
+  '#bcf60c',
+  '#fabebe',
+  '#008080',
+  '#e6beff',
+  '#9a6324',
+  '#800000',
+  '#aaffc3',
+];
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // keep 32-bit
+  }
+  return Math.abs(hash);
+}
+
+const colorForSource = (url: string) => PALETTE[hashCode(url) % PALETTE.length];
 
 @customElement('map-libre')
 export class MapLibre extends LitElement {
-  @state() map: maplibregl.MapLibreMap | null = null;
+  @consume({ context: bikesContext, subscribe: true })
+  availableBikes: Record<string, AvailableBike[]> = {};
+
+  private map: maplibregl.MapLibreMap | null = null;
 
   static styles = css`
     #map {
       width: 100vw;
       height: 100vh;
     }
+    p {
+      position: absolute;
+      right: 0;
+    }
   `;
 
   firstUpdated() {
     const mapNode = this.renderRoot.querySelector('#map');
-    console.log(mapNode);
     if (!this.map && mapNode) {
       try {
         this.map = new maplibregl.Map({
           container: mapNode as HTMLElement, // container id
-          style: 'https://demotiles.maplibre.org/style.json', // style URL
+          style: 'https://tiles.openfreemap.org/styles/bright',
           center: [0, 0], // starting position [lng, lat]
           zoom: 1, // starting zoom
           maplibreLogo: true,
@@ -31,8 +69,53 @@ export class MapLibre extends LitElement {
     }
   }
 
+  private handleBikeChange() {
+    if (!this.map) {
+      return;
+    }
+    const sources = Object.keys(this.availableBikes);
+    const currentSources = Object.keys(this.map.getStyle().sources);
+    currentSources.forEach(source => {
+      if (source.startsWith('gbfs-') && !sources.includes(source)) {
+        this.map?.removeLayer(source);
+        this.map?.removeSource(source);
+      }
+    });
+    Object.entries(this.availableBikes).forEach(([url, bikes]) => {
+      const sourceId = 'gbfs-' + url;
+      if (this.map?.getSource(sourceId)) {
+        return;
+      }
+      this.map?.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: bikes.map(bike => ({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'Point',
+              coordinates: [bike.lon, bike.lat],
+            },
+          })),
+        },
+      });
+      this.map?.addLayer({
+        id: sourceId,
+        type: 'circle',
+        source: sourceId,
+        paint: {
+          'circle-color': colorForSource(url),
+          'circle-radius': 6,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#ffffff',
+        },
+      });
+    });
+  }
+
   render() {
-    console.log('rendered');
-    return html`<div id="map"></div> `;
+    this.handleBikeChange();
+    return html` <div id="map"></div> `;
   }
 }

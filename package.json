@@ -17,6 +17,7 @@
     "start": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"web-dev-server\""
   },
   "dependencies": {
+    "@lit/context": "^1.1.6",
     "lit": "^3.1.4",
     "lit-html": "^3.3.3",
     "maplibre-gl": "^6.6.0"
