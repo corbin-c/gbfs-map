@@ -1,19 +1,21 @@
 import { LitElement, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
+import { proxified } from './cors-proxy.js';
 
-const csv = new URL('../../data/gbfs-systems.csv', import.meta.url).href;
+const csv =
+  'https://raw.githubusercontent.com/MobilityData/gbfs/refs/heads/master/systems.csv';
 
 @customElement('search-field')
 export class SearchField extends LitElement {
-  @property({ type: Array<Array<String>> }) gbfsSystems: string[][] = [];
+  @state() gbfsSystems: string[][] = [];
 
-  @property({ type: String }) searchValue = '';
+  @state() searchValue = '';
 
   constructor() {
     super();
     (async () => {
       try {
-        const csvResponse = await fetch(csv);
+        const csvResponse = await fetch(proxified(csv));
         if (!csvResponse.ok) {
           throw new Error('error fetching csv');
         }
