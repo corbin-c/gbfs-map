@@ -1,81 +1,57 @@
 import { LitElement, html, css } from 'lit';
 import { property, customElement } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 
-const logo = new URL('../../assets/open-wc-logo.svg', import.meta.url).href;
+import './search-field.js';
 
 @customElement('map-app')
 export class MapApp extends LitElement {
-  @property({ type: String }) header = 'My app';
+  @property({ type: String }) header = 'TEST';
 
-  static styles = css`
-    :host {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      font-size: calc(10px + 2vmin);
-      color: #1a2b42;
-      max-width: 960px;
-      margin: 0 auto;
-      text-align: center;
-      background-color: var(--map-app-background-color);
-    }
+  @property({ type: Array<Array<String>> }) results: string[][] = [];
 
-    main {
-      flex-grow: 1;
-    }
+  @property({ type: Object }) selected: Record<string, string> = {};
 
-    .logo {
-      margin-top: 36px;
-      animation: app-logo-spin infinite 20s linear;
-    }
+  static styles = css``;
 
-    @keyframes app-logo-spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .app-footer {
-      font-size: calc(12px + 0.5vmin);
-      align-items: center;
-    }
-
-    .app-footer a {
-      margin-left: 5px;
-    }
-  `;
+  private _handleOnResults(event: CustomEvent) {
+    this.selected = {};
+    this.results = event.detail;
+  }
 
   render() {
     return html`
       <main>
-        <div class="logo"><img alt="open-wc logo" src=${logo} /></div>
         <h1>${this.header}</h1>
-
-        <p>Edit <code>src/MapApp.ts</code> and save to reload.</p>
-        <a
-          class="app-link"
-          href="https://open-wc.org/guides/developing-components/code-examples"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Code examples
-        </a>
+        <search-field @results="${this._handleOnResults}"></search-field>
+        <ul>
+          ${repeat(
+            this.results,
+            e => e[5],
+            e =>
+              html` <li>
+                <label
+                  ><input
+                    value="${e[5]}"
+                    @change="${(event: Event) => {
+                      const target = event.target as HTMLInputElement;
+                      if (!target) {
+                        return;
+                      }
+                      if (target.checked) {
+                        // eslint-disable-next-line prefer-destructuring
+                        this.selected[e[5]] = e[1];
+                      } else {
+                        delete this.selected[e[5]];
+                      }
+                    }}"
+                    type="checkbox"
+                  />${e[1]}</label
+                >
+              </li>`,
+          )}
+        </ul>
       </main>
-
-      <p class="app-footer">
-        🚽 Made with love by
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/open-wc"
-          >open-wc</a
-        >.
-      </p>
     `;
   }
 }
