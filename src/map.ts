@@ -43,7 +43,8 @@ export class MapLibre extends LitElement {
 
   static styles = css`
     #map {
-      width: 100vw;
+      width: calc(100vw - 20rem);
+      margin-left: 20rem;
       height: 100vh;
     }
     p {
@@ -67,6 +68,25 @@ export class MapLibre extends LitElement {
         console.error(e);
       }
     }
+  }
+
+  private centerOnBikes() {
+    if (!this.map) return;
+    const bounds = new maplibregl.LngLatBounds();
+    let any = false;
+    for (const bikes of Object.values(this.availableBikes)) {
+      for (const bike of bikes) {
+        bounds.extend([bike.lon, bike.lat]);
+        any = true;
+      }
+    }
+    if (!any) return;
+
+    this.map.fitBounds(bounds, {
+      padding: 60, // pixels of breathing room around the edges
+      maxZoom: 15, // don't zoom in absurdly close for a single bike
+      duration: 1500, // ms (fitBounds animates; use 0 to jump)
+    });
   }
 
   private handleBikeChange() {
@@ -112,6 +132,7 @@ export class MapLibre extends LitElement {
         },
       });
     });
+    this.centerOnBikes();
   }
 
   render() {
