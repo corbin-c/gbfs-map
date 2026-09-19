@@ -101,7 +101,9 @@ export class MapLibre extends LitElement {
         this.map?.removeSource(source);
       }
     });
-    Object.entries(this.availableBikes).forEach(([url, bikes]) => {
+    Object.entries(this.availableBikes).forEach(entry => {
+      const url = entry[0];
+      const bikes = entry[1];
       const sourceId = 'gbfs-' + url;
       if (this.map?.getSource(sourceId)) {
         return;
