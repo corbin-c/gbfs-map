@@ -5,6 +5,7 @@ import { importMetaAssets } from '@web/rollup-plugin-import-meta-assets';
 import esbuild from 'rollup-plugin-esbuild';
 import { generateSW } from 'rollup-plugin-workbox';
 import path from 'path';
+import fs from 'fs';
 
 export default {
   input: 'index.html',
@@ -67,5 +68,15 @@ export default {
       clientsClaim: true,
       runtimeCaching: [{ urlPattern: 'polyfills/*.js', handler: 'CacheFirst' }],
     }),
+    /** Copy MapLibre GL worker files so the web worker resolves at runtime */
+    {
+      name: 'copy-maplibre-worker',
+      writeBundle() {
+        const src = path.resolve('node_modules/maplibre-gl/dist');
+        for (const file of ['maplibre-gl-worker.mjs', 'maplibre-gl-shared.mjs']) {
+          fs.copyFileSync(path.join(src, file), path.join('dist', file));
+        }
+      },
+    },
   ],
 };
