@@ -14,7 +14,7 @@ gbfs-map is a Lit-based web application that lets you search public GBFS systems
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+ (recommended)
+- [Node.js](https://nodejs.org/) 22+ (required)
 - [npm](https://www.npmjs.com/) 10+
 
 ## Getting started
